@@ -23,7 +23,7 @@
         }
 
         #screen-game {
-            min-height: 92dvh; /* ปรับให้พอดีหน้าจอมือถือมากขึ้น */
+            min-height: 92dvh;
             height: auto;
             justify-content: flex-start;
             gap: 10px;
@@ -153,7 +153,6 @@
             margin: 5px 0;
         }
         
-        /* แก้ไขหน้า 2: ปรับปรุง Grid และขนาดปุ่มตัวเลือกใหม่ */
         .options-grid { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -163,7 +162,6 @@
         }
         
         .option-btn { 
-            /* ลดความสูงลงเพื่อให้ไม่ล้นหน้าจอ */
             height: clamp(60px, 10vh, 90px);
             font-size: clamp(32px, 5vh, 50px); 
             border-radius: 18px; border: none; background: #f1f3f5; font-weight: 800; 
@@ -189,7 +187,6 @@
         }
         .cancel-btn:active { transform: scale(0.95); }
 
-        /* หน้า 3: สรุปผล */
         .result-card { text-align: center; }
         .result-row { 
             display: flex; justify-content: space-between; padding: 12px 15px; 
@@ -408,6 +405,10 @@
             history: []
         };
         
+        // --- ส่วนแก้ไขเสียงตามสั่ง ---
+        const sndCorrect = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3');
+        const sndEnd = new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3');
+
         const playClickSound = (freq = 600, type = 'sine', duration = 0.1) => {
             if (!gameState.isSoundOn) return;
             const context = new (window.AudioContext || window.webkitAudioContext)();
@@ -529,7 +530,9 @@
             document.getElementById('result-accuracy').innerText = acc + "%";
             
             renderHistoryTable('all');
-            playClickSound(600, 'sine', 0.5);
+            
+            // เล่นเสียงเมื่อจบเกม
+            if (gameState.isSoundOn) sndEnd.play();
         }
 
         function renderHistoryTable(filter) {
@@ -619,7 +622,11 @@
                     let status = 'wrong';
                     if (opt === correct) { 
                         btn.classList.add('correct');
-                        playClickSound(1000, 'sine', 0.1);
+                        // เล่นเสียงตอบถูกจากMixkit
+                        if (gameState.isSoundOn) {
+                            sndCorrect.currentTime = 0;
+                            sndCorrect.play();
+                        }
                         gameState.countCorrect++;
                         status = 'correct';
                     } else { 
@@ -628,6 +635,7 @@
                         Array.from(grid.children).forEach(b => {
                             if(parseInt(b.innerText) === correct) b.classList.add('correct');
                         });
+                        // เล่นเสียงตอบผิดเดิม (Beep)
                         playClickSound(200, 'triangle', 0.2);
                         document.getElementById('screen-game').classList.add('error-shake');
                         setTimeout(() => document.getElementById('screen-game').classList.remove('error-shake'), 300);
@@ -638,7 +646,7 @@
                     document.getElementById('stat-total').innerText = gameState.countTotal;
                     document.getElementById('stat-correct').innerText = gameState.countCorrect;
                     document.getElementById('stat-wrong').innerText = gameState.countWrong;
-                    setTimeout(newQuestion, 600);
+                    setTimeout(newQuestion, 350);
                 };
                 grid.appendChild(btn);
             });
