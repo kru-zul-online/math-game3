@@ -99,7 +99,6 @@
             display: flex; flex-direction: column; gap: 8px; text-align: center;
         }
         
-        /* ปรับให้อยู่กึ่งกลางหน้าจอ */
         .player-identity { 
             display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
             font-size: 20px; font-weight: 700; color: var(--primary); padding-right: 0;
@@ -133,7 +132,6 @@
         }
         .stat-box { display: flex; flex-direction: row; align-items: baseline; justify-content: center; gap: 6px; }
         .stat-label { font-size: 13px; font-weight: bold; }
-        /* ปรับขนาดตัวเลขสถิติให้ใหญ่ขึ้น */
         .stat-val { font-size: 28px; font-weight: 900; line-height: 1; }
         .unit-label { font-size: 12px; font-weight: bold; }
 
@@ -144,11 +142,10 @@
         .target-container { 
             flex-grow: 1; 
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 0; margin-top: -10px; /* ขยับขึ้น */
+            padding: 0; margin-top: -10px;
         }
         .target-hint { font-size: 26px; color: #64748b; font-weight: bold; margin-bottom: -5px; }
         
-        /* ขยายโจทย์ให้ใหญ่ขึ้น */
         #target-number { 
             font-size: clamp(120px, 25vh, 200px); 
             font-weight: 800; color: var(--warning); 
@@ -156,7 +153,6 @@
             margin: 5px 0;
         }
         
-        /* ปรับคอลัมน์ปุ่มตัวเลือกเป็น 3 คอลัมน์ (2 แถว) */
         .options-grid { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -188,6 +184,49 @@
             width: 90%;
         }
         .cancel-btn:active { transform: scale(0.95); }
+
+        /* หน้า 3: สรุปผล (ปรับปรุงใหม่) */
+        .result-card { text-align: center; }
+        .result-row { 
+            display: flex; justify-content: space-between; padding: 12px 15px; 
+            border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 20px; 
+            align-items: center;
+        }
+        .result-row:last-child { border-bottom: none; }
+        
+        /* สีแยกตามบรรทัดสรุปผล */
+        .row-total { color: var(--primary); }
+        .row-correct { color: var(--success); }
+        .row-wrong { color: var(--danger); }
+        .row-accuracy { color: #0288d1; }
+
+        .level-time-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; margin-top: 5px;
+        }
+
+        /* ประวัติการตอบ (ปรับปรุงให้แสดงยาวหน้าเดียว) */
+        .history-controls {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; margin-top: 20px;
+        }
+        .history-title { font-weight: bold; color: var(--primary); font-size: 18px; }
+        .filter-btns { display: flex; gap: 4px; }
+        .filter-btn {
+            padding: 4px 10px; border-radius: 8px; border: 1px solid #ddd;
+            background: #fff; font-size: 12px; cursor: pointer; font-family: 'Kanit';
+        }
+        .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .history-table-container {
+            border: 1px solid #e2e8f0; border-radius: 15px; background: #fff;
+            overflow: hidden; /* นำ max-height ออกเพื่อให้แสดงหน้าเดียว */
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 16px; }
+        th { background: #f8fafc; padding: 12px; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: center; }
+        .text-correct { color: var(--success); font-weight: bold; }
+        .text-wrong { color: var(--danger); font-weight: bold; }
+
     </style>
 </head>
 <body>
@@ -287,6 +326,74 @@
         <div class="options-grid" id="options"></div>
     </div>
 
+    <div id="screen-result" class="screen">
+        <div class="content-wrap result-card">
+            <h1 class="game-title" style="color: var(--primary)">📊 สรุปคะแนน</h1>
+            
+            <div class="container-box" style="margin-top:10px;">
+                <div id="result-player-name" style="font-size: 20px; font-weight: bold; color: var(--primary);"></div>
+                <div class="level-time-bar">
+                    <span id="result-level-info" class="level-tag">ระดับ: -</span>
+                    <span id="result-time-info" class="level-tag" style="background:var(--secondary); color: var(--dark);">เวลา: -</span>
+                </div>
+            </div>
+            
+            <div class="container-box">
+                <div class="result-row row-total">
+                    <span>📝 ทำไปทั้งหมด:</span>
+                    <b id="result-total">0 ข้อ</b>
+                </div>
+                <div class="result-row row-correct">
+                    <span>✅ ตอบถูก:</span>
+                    <b id="result-correct">0 ข้อ</b>
+                </div>
+                <div class="result-row row-wrong">
+                    <span>❌ ตอบผิด:</span>
+                    <b id="result-wrong">0 ข้อ</b>
+                </div>
+                <div class="result-row row-accuracy">
+                    <span>🎯 ความแม่นยำ:</span>
+                    <b id="result-accuracy">0%</b>
+                </div>
+            </div>
+
+            <div class="history-controls">
+                <div class="history-title">🕒 ประวัติการตอบ</div>
+                <div class="filter-btns">
+                    <button class="filter-btn active" onclick="filterHistory('all', this)">ทั้งหมด</button>
+                    <button class="filter-btn" onclick="filterHistory('correct', this)">ถูก</button>
+                    <button class="filter-btn" onclick="filterHistory('wrong', this)">ผิด</button>
+                </div>
+            </div>
+            <div class="history-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ข้อ</th>
+                            <th>โจทย์</th>
+                            <th>ตอบ</th>
+                            <th>ผล</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body"></tbody>
+                </table>
+            </div>
+
+            <p style="color: #ff1744; font-size: 18px; font-weight: bold; margin: 15px 0;">📸 กรุณาแคปเจอร์หน้าจอเพื่อส่งคะแนน</p>
+
+            <div style="display: flex; gap:10px;">
+                <button class="btn-main" onclick="location.reload()" style="height: 60px; font-size: 22px;">🔄 เล่นอีกครั้ง</button>
+            </div>
+            
+            <div class="footer">
+                ออกแบบและพัฒนาโดย...
+                <span class="dev-name">นายซูลกิฟลี ดอเลาะ</span>
+                <span>ครู โรงเรียนไทยรัฐวิทยา 52 (ชุมชนบ้านต้นไพ)</span><br>
+                <span>สพป.ปัตตานี เขต 2</span>
+            </div>
+        </div>
+    </div>
+
     <div id="cancel-area" class="cancel-btn-wrapper">
         <button onclick="location.reload()" class="cancel-btn">✕ ยกเลิกและกลับหน้าหลัก</button>
     </div>
@@ -295,7 +402,8 @@
         let gameState = { 
             timeLeft: 0, totalTime: 0, timerId: null, 
             isSoundOn: true, isAnswering: false,
-            countTotal: 0, countCorrect: 0, countWrong: 0
+            countTotal: 0, countCorrect: 0, countWrong: 0,
+            history: []
         };
         
         const playClickSound = (freq = 600, type = 'sine', duration = 0.1) => {
@@ -315,6 +423,14 @@
             document.getElementById('sound-btn-setup').innerText = icon;
             document.getElementById('sound-btn-game').innerText = icon;
             if(gameState.isSoundOn) playClickSound(800);
+        }
+
+        function isPrime(num) {
+            if (num <= 1) return false;
+            for (let i = 2; i <= Math.sqrt(num); i++) {
+                if (num % i === 0) return false;
+            }
+            return true;
         }
 
         document.querySelectorAll('.btn-select').forEach(btn => {
@@ -359,6 +475,7 @@
             gameState.totalTime = parseInt(timeSelected);
             gameState.timeLeft = gameState.totalTime;
             gameState.countTotal = 0; gameState.countCorrect = 0; gameState.countWrong = 0;
+            gameState.history = [];
             
             document.getElementById('screen-setup').style.display = 'none';
             document.getElementById('screen-game').classList.add('active');
@@ -388,21 +505,65 @@
                 
                 if (gameState.timeLeft <= 0) {
                     clearInterval(gameState.timerId);
-                    barArea.classList.remove('urgent-shake');
-                    playClickSound(150, 'sawtooth', 0.5);
-                    alert(`⏰ หมดเวลาแล้วครับ!\nทั้งหมด: ${gameState.countTotal} ข้อ\nถูก: ${gameState.countCorrect} ข้อ\nผิด: ${gameState.countWrong} ข้อ`);
-                    location.reload();
+                    showResult();
                 }
             }, 1000);
         }
 
+        function showResult() {
+            document.getElementById('screen-game').classList.remove('active');
+            document.getElementById('cancel-area').style.display = 'none';
+            document.getElementById('screen-result').classList.add('active');
+            
+            // ปรับข้อมูลหน้าสรุป
+            document.getElementById('result-player-name').innerHTML = document.getElementById('player-display').innerHTML;
+            document.getElementById('result-level-info').innerText = document.getElementById('info-p-level').innerText;
+            document.getElementById('result-time-info').innerText = "เวลา: " + gameState.totalTime + " วินาที";
+            
+            document.getElementById('result-total').innerText = gameState.countTotal + " ข้อ";
+            document.getElementById('result-correct').innerText = gameState.countCorrect + " ข้อ";
+            document.getElementById('result-wrong').innerText = gameState.countWrong + " ข้อ";
+            
+            const acc = gameState.countTotal > 0 ? Math.round((gameState.countCorrect / gameState.countTotal) * 100) : 0;
+            document.getElementById('result-accuracy').innerText = acc + "%";
+            
+            renderHistoryTable('all');
+            playClickSound(600, 'sine', 0.5);
+        }
+
+        function renderHistoryTable(filter) {
+            const body = document.getElementById('history-body');
+            body.innerHTML = '';
+            gameState.history.forEach((item, index) => {
+                if(filter === 'all' || item.status === filter) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.target}</td>
+                        <td>${item.ans}</td>
+                        <td class="${item.status === 'correct' ? 'text-correct' : 'text-wrong'}">
+                            ${item.status === 'correct' ? '✔' : '✘'}
+                        </td>
+                    `;
+                    body.appendChild(row);
+                }
+            });
+        }
+
+        function filterHistory(type, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderHistoryTable(type);
+        }
+
+        /* --- กฎการสุ่มเดิม (ห้ามแก้ไข) --- */
         function newQuestion() {
             gameState.isAnswering = false;
             const ranges = Array.from(document.querySelectorAll('.range-btn.selected')).map(b => b.dataset.value);
             let pool = [];
             ranges.forEach(r => {
                 const [min, max] = r.split('-').map(Number);
-                for(let i = min; i <= max; i++) if(i > 1) pool.push(i);
+                for(let i = min; i <= max; i++) if(i >= 2) pool.push(i);
             });
             
             const target = pool[Math.floor(Math.random() * pool.length)];
@@ -411,12 +572,25 @@
             let allFactors = [];
             for(let i=1; i<=target; i++) if(target % i === 0) allFactors.push(i);
             
-            const correct = allFactors[Math.floor(Math.random() * allFactors.length)];
-
+            let isTargetPrime = isPrime(target);
+            let validCorrectFactors = isTargetPrime ? allFactors : allFactors.filter(f => f !== 1);
+            const correct = validCorrectFactors[Math.floor(Math.random() * validCorrectFactors.length)];
+            
             let options = [correct];
             let attempts = 0; 
-            while(options.length < 6 && attempts < 100) {
-                let wrong = Math.floor(Math.random() * (target + 10)) + 1;
+
+            while(options.length < 6 && attempts < 1000) {
+                let wrong;
+                if (isTargetPrime) {
+                    let baseMax = target + 1;
+                    if (target < 10) baseMax += 5; 
+                    wrong = Math.floor(Math.random() * (baseMax)) + 1;
+                } else if (target % 2 !== 0) {
+                    wrong = Math.floor(Math.random() * target) + 2;
+                } else {
+                    let limit = Math.floor(target / 2);
+                    wrong = Math.floor(Math.random() * limit) + 2;
+                }
                 if (!allFactors.includes(wrong) && !options.includes(wrong)) {
                     options.push(wrong);
                 }
@@ -424,7 +598,8 @@
             }
             
             while(options.length < 6) {
-                let filler = Math.floor(Math.random() * 200) + 1;
+                let minStart = isTargetPrime ? 1 : 2;
+                let filler = Math.floor(Math.random() * (target + 6)) + minStart;
                 if(!allFactors.includes(filler) && !options.includes(filler)) options.push(filler);
             }
 
@@ -441,10 +616,12 @@
                     gameState.isAnswering = true;
                     gameState.countTotal++;
 
+                    let status = 'wrong';
                     if (opt === correct) { 
                         btn.classList.add('correct');
                         playClickSound(1000, 'sine', 0.1);
                         gameState.countCorrect++;
+                        status = 'correct';
                     } else { 
                         btn.classList.add('wrong');
                         gameState.countWrong++;
@@ -456,10 +633,12 @@
                         setTimeout(() => document.getElementById('screen-game').classList.remove('error-shake'), 300);
                     }
                     
+                    gameState.history.push({ target: target, ans: opt, status: status });
+
                     document.getElementById('stat-total').innerText = gameState.countTotal;
                     document.getElementById('stat-correct').innerText = gameState.countCorrect;
                     document.getElementById('stat-wrong').innerText = gameState.countWrong;
-                    setTimeout(newQuestion, 500);
+                    setTimeout(newQuestion, 600);
                 };
                 grid.appendChild(btn);
             });
